@@ -6,6 +6,7 @@ import javax.swing.text.html.ImageView
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.image.BufferedImage
+import java.lang.Thread.sleep
 
 /*Class and some main code taken from
 https://rosettacode.org/wiki/Bitmap/PPM_conversion_through_a_pipe#Kotlin
@@ -31,6 +32,20 @@ fun main(args: Array<String>) {
     val width = 640
     val height = 640
     val bbs = BasicBitmapStorage(width, height)
+    val theImage: BufferedImage = ImageIO.read(File("testImage.png"))
+    for (w in 0..(width - 1)) {
+        for (h in 0..(height - 1)) {
+            val theColor = theImage.getRGB(w, h)
+            println(theColor)
+        }
+    }
+    //get pixel colors from theImage
+
+
+    //set pixel colors in bbs
+
+
+    /*
     for (y in 0 until height) {
         for (x in 0 until width) {
             val c = Color(x % 256, y % 256, (x * y) % 256)
@@ -61,4 +76,8 @@ fun main(args: Array<String>) {
             }
         }
     }
+    sleep(1000)
+    */
+
+
 }
