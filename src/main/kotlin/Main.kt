@@ -96,6 +96,9 @@ fun main(args: Array<String>) {
         ImageIO.write(outputImage, "PNG", File(filename))
     }
 
+
+    /* Actua start of main code */
+    //TODO: Separate convolution code into a separate class
     val kernelWidth = 7
     val kernelHeight = 7
     val kernel = ArrayData(kernelWidth, kernelHeight)
@@ -121,7 +124,7 @@ fun main(args: Array<String>) {
         println("]")
     }
 
-    fun blur(filenameString: String, x: Int) {
+    fun blur(filenameString: String, x: Int): BufferedImage {
         val dataArrays = getArrayDatasFromImage(filenameString)
         for (i in dataArrays.indices) {
             dataArrays[i] = convolute(dataArrays[i], kernel, kernelDivisor)
@@ -136,46 +139,33 @@ fun main(args: Array<String>) {
             }
         }
         writeOutputImage("newImage.png", dataArraysNew)
+        return ImageIO.read(File("newImage.png"))
     }
 
-    blur("testImage.png", 50)
-    println("Done.")
-
-
-    /*
-    //TODO: Add nice error handling, try/catch
     val theImage: BufferedImage = ImageIO.read(File("testImage.png"))
+
+    val BLUR_AMNT = 10
+    val blurredImage = blur("testImage.png", BLUR_AMNT)
+    //TODO: Add nice error handling, try/catch
     val width = theImage.width
     val height = theImage.height
-    val newImage: BufferedImage = BufferedImage(width, height + 100, BufferedImage.TYPE_3BYTE_BGR)
-
+    val finalImage: BufferedImage = BufferedImage(width, height + 100, BufferedImage.TYPE_3BYTE_BGR)
 
     for (w in 0..(width - 1)) {
         for (h in 0..(height - 1)) {
             val rgb = theImage.getRGB(w, h)
-            val alpha: Int = rgb shr 24 and 0xFF
-            val red: Int = rgb shr 16 and 0xFF
-            val green: Int = rgb shr 8 and 0xFF
-            val blue: Int = rgb and 0xFF
-
-
-            val rgbBlurred = 1
-            newImage.setRGB(w,h, rgb)
-            //Thanks to a very helpful person on stackoverflow for how to get r,g,b from a TYPE_INT_ARGB
-            //https://stackoverflow.com/questions/6001211/format-of-type-int-rgb-and-type-int-argb
+            finalImage.setRGB(w, h, rgb)
         }
     }
 
-
-    //TODO: Make some halfway variables for readability
     for (w in 0 .. (width - 1)) {
-        for (h in (height..(height + 100 - 1))) {
-           // newImage.setRGB(w, h, )
+        for (h in (height - 100)..height - 1) {
+           val blurredRGB = blurredImage.getRGB(w, h)
+            finalImage.setRGB(w, h + 100, blurredRGB)
         }
     }
 
-    val outputFile = File("newImage.png")
-    //ImageIO.write(newImage, "png", outputFile)
-    */
+    val outputFile = File("finalImage.png")
+    ImageIO.write(finalImage, "png", outputFile)
 
 }
