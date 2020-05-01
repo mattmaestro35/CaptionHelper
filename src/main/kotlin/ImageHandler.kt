@@ -52,9 +52,8 @@ fun convolute(
 }
 
 //Takes in an image, returns the RGB data of that image in an ArrayData object.
-fun getArrayDatasFromImage(filename: String): Array<ArrayData> {
+fun getArrayDatasFromImage(inputImage: BufferedImage): Array<ArrayData> {
 
-    val inputImage = ImageIO.read(File(filename))
     val width = inputImage.width
     val height = inputImage.height
 
@@ -98,10 +97,10 @@ fun writeOutputImage(filename: String, redGreenBlue: Array<ArrayData>) {
 }
 
 //Return the data of the blurred image.
-fun blur(filenameString: String, kernel: ArrayData, kernelDivisor: Int): Array<ArrayData> {
+fun blur(inputImage: BufferedImage, kernel: ArrayData, kernelDivisor: Int): Array<ArrayData> {
 
     //Initial blurring.
-    val dataArrays = getArrayDatasFromImage(filenameString)
+    val dataArrays = getArrayDatasFromImage(inputImage)
     val blurAmnt = 6
 
     for (value in 0..blurAmnt) {
@@ -119,6 +118,7 @@ fun writeText(userCaption: String, addedHeight: Int, finalImage: BufferedImage) 
     val g: Graphics = finalImage.graphics
     val tryFontSize = (finalImage.width - 100) / (.5 * userCaption.length)
 
+    //Constrain font size.
     val fontSize: Double = when {
         tryFontSize >= (addedHeight/2) -> (addedHeight/2).toDouble()
         tryFontSize <= 8 -> 8.0
@@ -126,7 +126,7 @@ fun writeText(userCaption: String, addedHeight: Int, finalImage: BufferedImage) 
     }
 
     g.font = g.font.deriveFont(fontSize.toFloat())
-    println(fontSize.toFloat())
+    //println(fontSize.toFloat())
     g.drawString(userCaption, (finalImage.width / 10), (finalImage.height - (addedHeight - fontSize.toInt()) / 2))
     g.dispose()
 }
@@ -135,7 +135,10 @@ fun writeText(userCaption: String, addedHeight: Int, finalImage: BufferedImage) 
 fun createFinalImage(userCaption: String, inputImageFilename: String,
                      finalImageFilename : String) {
 
-    val theImage = ImageIO.read(File(inputImageFilename))
+    val classLoader = Thread.currentThread().contextClassLoader
+    val aPic = classLoader.getResource(inputImageFilename);
+    val theImage = ImageIO.read(aPic)
+
     println("Image found successfully.")
 
     //Create kernel to use for blurring algorithm.
@@ -174,7 +177,7 @@ fun createFinalImage(userCaption: String, inputImageFilename: String,
 
     //Create a blurred version of the image by filename.
     println("Blurring...")
-    val blurredData = blur(inputImageFilename, kernel, kernelDivisor)
+    val blurredData = blur(theImage, kernel, kernelDivisor)
 
     //Get just the blurred bottom.
 
@@ -213,7 +216,8 @@ fun createFinalImage(userCaption: String, inputImageFilename: String,
 
 
     //Save file externally.
-    val outputFile = File(finalImageFilename)
+    val path = "src/main/resources/$finalImageFilename"
+    val outputFile = File(path)
     ImageIO.write(finalImage, "png", outputFile)
     println("Complete.")
 
