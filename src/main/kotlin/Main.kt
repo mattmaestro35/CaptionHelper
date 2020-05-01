@@ -10,7 +10,7 @@ fun main(args: Array<String>) {
     //TODO: Work from command line
     val inputImageFilename = "noTextImage.png"
     val finalImageFilename = "YesTextImage.png"
-    val userCaption = "No cost too great."
+    val userCaption = "No cost too great"
 
 
     //Try to get image to blur from file.
@@ -19,7 +19,7 @@ fun main(args: Array<String>) {
 
     when (theImage) {
         null -> println ("Error when retrieving image.")
-        else -> createFinalImage(theImage, userCaption, inputImageFilename, finalImageFilename)
+        else -> createFinalImage(userCaption, inputImageFilename, finalImageFilename)
     }
 
 }
