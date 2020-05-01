@@ -3,12 +3,13 @@ import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.roundToInt
 
+//Bound an integer.
 fun bound(value: Int, endIndex: Int) = when {
     value < 0        -> 0
     value < endIndex -> value
     else             -> endIndex - 1
 }
-
+//Gaussion blur/convolution code based on https://rosettacode.org/wiki/Image_convolution#Kotlin
 fun convolute(
     inputData: ArrayData,
     kernel: ArrayData,
@@ -19,7 +20,7 @@ fun convolute(
     val kernelWidth = kernel.width
     val kernelHeight = kernel.height
     if (kernelWidth <= 0 || (kernelWidth and 1) != 1)
-        throw IllegalArgumentException("Kernel must have odd width")
+        throw IllegalArgumentException("Kernel must have odd width") as Throwable
     if (kernelHeight <= 0 || (kernelHeight and 1) != 1)
         throw IllegalArgumentException("Kernel must have odd height")
     val kernelWidthRadius = kernelWidth ushr 1
@@ -43,6 +44,7 @@ fun convolute(
     return outputData
 }
 
+//Takes in an image, returns the RGB data of that image in an ArrayData object.
 fun getArrayDatasFromImage(filename: String): Array<ArrayData> {
     val inputImage = ImageIO.read(File(filename))
     //val outputfile = File("doubleCheck.png")
@@ -53,6 +55,7 @@ fun getArrayDatasFromImage(filename: String): Array<ArrayData> {
     val reds = ArrayData(width, height)
     val greens = ArrayData(width, height)
     val blues = ArrayData(width, height)
+
     for (y in 0 until height) {
         for (x in 0 until width) {
             val rgbValue = rgbData[y * width + x]
@@ -64,11 +67,14 @@ fun getArrayDatasFromImage(filename: String): Array<ArrayData> {
     return arrayOf(reds, greens, blues)
 }
 
+//Write the data from an ArrayData to an image file given by filename.
 fun writeOutputImage(filename: String, redGreenBlue: Array<ArrayData>) {
+
     val (reds, greens, blues) = redGreenBlue
     val outputImage = BufferedImage(
         reds.width, reds.height, BufferedImage.TYPE_INT_ARGB
     )
+
     for (y in 0 until reds.height) {
         for (x in 0 until reds.width) {
             val red = bound(reds[x , y], 256)
@@ -79,24 +85,98 @@ fun writeOutputImage(filename: String, redGreenBlue: Array<ArrayData>) {
             )
         }
     }
+
     ImageIO.write(outputImage, "PNG", File(filename))
 }
 
-//Blur the given image x number of times.
-fun blur(filenameString: String, x: Int, kernel: ArrayData, kernelDivisor: Int):BufferedImage {
+//Blur the image given by filenameString, return the blurred version.
+fun blur(filenameString: String, kernel: ArrayData, kernelDivisor: Int):BufferedImage {
+
+    //Initial blurring.
     val dataArrays = getArrayDatasFromImage(filenameString)
     for (i in dataArrays.indices) {
         dataArrays[i] = convolute(dataArrays[i], kernel, kernelDivisor)
     }
-    writeOutputImage("newImage.png", dataArrays)
 
-    val dataArraysNew = getArrayDatasFromImage("newImage.png")
-    for (value in 0..x) {
-        println("Blur Iteration " + value)
-        for (i in dataArraysNew.indices) {
-            dataArraysNew[i] = convolute(dataArraysNew[i], kernel, kernelDivisor)
+    //Subsequent blurring.
+    val blurAmnt = 5
+
+    for (value in 0..blurAmnt) {
+        //println("Blur Iteration " + value)
+        for (i in dataArrays.indices) {
+            dataArrays[i] = convolute(dataArrays[i], kernel, kernelDivisor)
         }
     }
-    writeOutputImage("newImage.png", dataArraysNew)
+
+    writeOutputImage("newImage.png", dataArrays)
     return ImageIO.read(File("newImage.png"))
+}
+
+fun createFinalImage(theImage: BufferedImage, userCaption: String, inputImageFilename: String,
+                     finalImageFilename : String) {
+
+    //Create kernel to use for blurring algorithm.
+    val kernelWidth = 7
+    val kernelHeight = 7
+    val kernel = ArrayData(kernelWidth, kernelHeight)
+    //Integers here correspond to relative weight of each pixel's RGB value when blurring.
+    //More evenly spread weight = heavier blurring.
+    val kernelArray = arrayOf(
+        2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2,
+        2, 2, 3, 4, 3, 2, 2,
+        2, 2, 4, 4, 4, 2, 2,
+        2, 2, 3, 4, 3, 2, 2,
+        2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2
+    )
+    val kernelDivisor = kernelArray.sum()
+    //println("Kernel size: $kernelWidth x $kernelHeight, divisor = $kernelDivisor")
+
+    //Create matrix from kernelArray
+    var y = 0
+    for (i in 0 until kernelHeight) {
+        for (j in 0 until kernelWidth) {
+            kernel[j, i] = kernelArray[y++]
+        }
+    }
+
+    //Create BufferedImage that will become the final image. Height is increased by 100 pixels.
+    val width = theImage.width
+    val height = theImage.height
+    val finalImage = BufferedImage(width, height + 100, BufferedImage.TYPE_3BYTE_BGR)
+
+    //Create a blurred version of the image by filename.
+    val blurredImage = blur(inputImageFilename, kernel, kernelDivisor)
+
+    //Copy the original image into final image.
+    for (w in 0..(width - 1)) {
+        for (h in 0..(height - 1)) {
+            val rgb = theImage.getRGB(w, h)
+            finalImage.setRGB(w, h, rgb)
+        }
+    }
+
+    //Copy the bottom portion of blurred image into the final image.
+    for (w in 0 .. (width - 1)) {
+        for (h in (height - 100)..height - 1) {
+            val blurredRGB = blurredImage.getRGB(w, h)
+            finalImage.setRGB(w, h + 100, blurredRGB)
+        }
+    }
+
+    val outputFile = File("finalImage.png")
+    //Save file externally.
+    ImageIO.write(finalImage, "png", outputFile)
+
+    /*
+    val g = blurredImage.graphics;
+    g.font = g.font.deriveFont(30f);
+    val captionString = "No cost too great."
+    g.drawString(captionString, 100, 100);
+    g.dispose();
+    */
+    val blurredFile = File("blurredFile.png")
+    //ImageIO.write(blurredImage, "png", blurredFile)
+
 }
