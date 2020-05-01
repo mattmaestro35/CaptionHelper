@@ -1,9 +1,6 @@
-import java.awt.image.BufferedImage
-import java.io.File
 import javax.imageio.ImageIO
 
-
-fun main(args: Array<String>) {
+fun main() {
 
     //User prompts for input
     println("Please enter the filename of the PNG you wish to add a caption to.")
@@ -11,24 +8,28 @@ fun main(args: Array<String>) {
     println("Please enter the desired output filename.")
     val finalImageFilename = readLine() + ".png"
     println("Please enter your caption.")
-    val userCaption = readLine()
+    val userCaption = readLine() + ""
+    println("Please input text color, 'black' or 'white'.")
+    val color = when (readLine()) {
+        "black" -> "black"
+        "white" -> "white"
+        else -> {
+            println("Invalid color input. Defaulting to white..")
+            "white"
+        }
+    }
 
-
-
-    if (inputImageFilename != null && finalImageFilename != null && userCaption != null) {
-
-
-
-
-        val classLoader = Thread.currentThread().contextClassLoader
-        val aPic = classLoader.getResource(inputImageFilename);
+    val classLoader = Thread.currentThread().contextClassLoader
+    try {
+        val aPic = classLoader.getResource(inputImageFilename)
 
         when (ImageIO.read(aPic)) {
             null -> println ("Error when retrieving image.")
-            else -> createFinalImage(userCaption, inputImageFilename, finalImageFilename)
+            else -> createFinalImage(userCaption, inputImageFilename, finalImageFilename, color)
         }
-    } else {
-        println ("Invalid input.")
+    } catch (e: Exception) {
+        println("Error when retrieving image: $e")
     }
+
 
 }

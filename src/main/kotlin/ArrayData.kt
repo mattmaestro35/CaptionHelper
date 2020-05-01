@@ -1,5 +1,5 @@
 class ArrayData(val width: Int, val height: Int) {
-    var dataArray = IntArray(width * height)
+    private var dataArray = IntArray(width * height)
 
     operator fun get(x: Int, y: Int) = dataArray[y * width + x]
 
