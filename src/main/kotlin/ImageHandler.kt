@@ -102,7 +102,7 @@ fun blur(filenameString: String, kernel: ArrayData, kernelDivisor: Int): Array<A
 
     //Initial blurring.
     val dataArrays = getArrayDatasFromImage(filenameString)
-    val blurAmnt = 3
+    val blurAmnt = 6
 
     for (value in 0..blurAmnt) {
         //println("Blur Iteration " + value)
@@ -113,6 +113,24 @@ fun blur(filenameString: String, kernel: ArrayData, kernelDivisor: Int): Array<A
 
     return dataArrays
 }
+
+fun writeText(userCaption: String, addedHeight: Int, finalImage: BufferedImage) {
+    //Write text onto bottom portion
+    val g: Graphics = finalImage.graphics
+    val tryFontSize = (finalImage.width - 100) / (.5 * userCaption.length)
+
+    val fontSize: Double = when {
+        tryFontSize >= (addedHeight/2) -> (addedHeight/2).toDouble()
+        tryFontSize <= 8 -> 8.0
+        else -> tryFontSize
+    }
+
+    g.font = g.font.deriveFont(fontSize.toFloat())
+    println(fontSize.toFloat())
+    g.drawString(userCaption, (finalImage.width / 10), (finalImage.height - (addedHeight - fontSize.toInt()) / 2))
+    g.dispose()
+}
+
 
 fun createFinalImage(userCaption: String, inputImageFilename: String,
                      finalImageFilename : String) {
@@ -189,12 +207,10 @@ fun createFinalImage(userCaption: String, inputImageFilename: String,
         }
     }
 
-    //Write text onto bottom portion
-    val g: Graphics = finalImage.graphics
-    val fontSize = (finalImage.width + 150) / userCaption.length
-    g.font = g.font.deriveFont(fontSize.toFloat())
-    g.drawString(userCaption, (finalImage.width / 10), (finalImage.height - addedHeight / 3))
-    g.dispose()
+
+    writeText(userCaption, addedHeight, finalImage)
+
+
 
     //Save file externally.
     val outputFile = File(finalImageFilename)
